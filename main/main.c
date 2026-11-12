@@ -115,25 +115,50 @@ struct MenuNode* find_grandparent_node(struct MenuNode *node, struct MenuNode *g
 	return NULL;
 }
 
+void exit_menu() {
+    curr_parent_node = root_menu_node;
+    curr_state = STATE_CC;
+    refresh_display = true;
+}
+
 void perform_menu_action() {
 	// Back (go back to the previous menu (parent node's parent))
 	if (compare_strings(MENU_OPTION_BACK, curr_menu_node->data, 4)) {
 		curr_parent_node = find_grandparent_node(root_menu_node, NULL);
-		if (curr_parent_node == NULL) {
-			curr_parent_node = root_menu_node;
-			curr_state = STATE_CC;
-		} else {
+		if (curr_parent_node != NULL) {
 			curr_section_lead_node = curr_parent_node->first_child;
 			curr_menu_node = curr_section_lead_node;
 			curr_menu_pos = 0;
-		}
-        refresh_display = true;
+            refresh_display = true;
+		} else {
+            exit_menu();
+        }
     } else if (compare_strings(MENU_OPTION_SYSTEM_INFO, curr_menu_node->data, -1)) {
         curr_state = STATE_SI;
         refresh_display = true;
 	} else if (compare_strings(MENU_OPTION_CLEAR_ERROR_CODE, curr_menu_node->data, -1)) {
         ESP_LOGI(TAG_INFO, "Cleared error bits.");
         error_bits = 0b00000000;
+    } else if (compare_strings(MENU_OPTION_CLEAR, curr_menu_node->data, -1)) {
+        memset(cc_desc, 0, MAX_DESC_CHARS);
+        memcpy(cc_desc, CC_CLEAR, MAX_DESC_CHARS);
+        exit_menu();
+    } else if (compare_strings(MENU_OPTION_CLOUDY, curr_menu_node->data, -1)) {
+        memset(cc_desc, 0, MAX_DESC_CHARS);
+        memcpy(cc_desc, MENU_OPTION_CLOUDY, MAX_DESC_CHARS);
+        exit_menu();
+    } else if (compare_strings(MENU_OPTION_PARTLY_CLOUDY, curr_menu_node->data, -1)) {
+        memset(cc_desc, 0, MAX_DESC_CHARS);
+        memcpy(cc_desc, MENU_OPTION_PARTLY_CLOUDY, MAX_DESC_CHARS);
+        exit_menu();
+    } else if (compare_strings(MENU_OPTION_SCATTERED_SHOWERS, curr_menu_node->data, -1)) {
+        memset(cc_desc, 0, MAX_DESC_CHARS);
+        memcpy(cc_desc, MENU_OPTION_SCATTERED_SHOWERS, MAX_DESC_CHARS);
+        exit_menu();
+    } else if (compare_strings(MENU_OPTION_THUNDERSTORM, curr_menu_node->data, -1)) {
+        memset(cc_desc, 0, MAX_DESC_CHARS);
+        memcpy(cc_desc, MENU_OPTION_THUNDERSTORM, MAX_DESC_CHARS);
+        exit_menu();
     }
 }
 
@@ -741,19 +766,20 @@ bool update_seven_seg() {
 void update_menu(bool menu, bool menu_up, bool menu_down) {
 	// Move the cursor and check if we need to display a new section of the menu.
 	if (menu_up && (curr_menu_node->prev_sibling != NULL)) {
-        ESP_LOGI(TAG_INFO, "%s", curr_menu_node->prev_sibling->data);
 		curr_menu_node = curr_menu_node->prev_sibling;
 		curr_menu_pos--;
 		if (curr_menu_pos < 0) {
-			// Get the node 4 spots behind to start at the end of the section
-			uint8_t i = 3;
+			// Get the node 4 spots behind the current node and start the section with it.
+            uint8_t starting_index = MENU_MAX_OPTIONS_DISPLAYED - 1;
+			uint8_t i = starting_index;
 			struct MenuNode *temp_node = curr_menu_node;
-			while (i > 0 && temp_node != NULL) {
-				temp_node = curr_menu_node->prev_sibling;
+			while (i > 0 && temp_node->prev_sibling != NULL) {
+				temp_node = temp_node->prev_sibling;
 				i--;
 			}				
 			curr_section_lead_node = temp_node;
-			curr_menu_pos = 3;
+			curr_menu_pos = starting_index;
+            ESP_LOGI(TAG_INFO, "curr_section_lead_node: %s", curr_section_lead_node->data);
 		}
         refresh_display = true;
 	} else if (menu_down && (curr_menu_node->next_sibling != NULL)) {
@@ -761,6 +787,7 @@ void update_menu(bool menu, bool menu_up, bool menu_down) {
 		curr_menu_pos++;
 		if (curr_menu_pos == MENU_MAX_OPTIONS_DISPLAYED) {
 			curr_section_lead_node = curr_menu_node;
+            curr_menu_pos = 0;
 		}
         refresh_display = true;
 	} else if (menu) {
@@ -823,18 +850,19 @@ void draw_cc_view() {
     draw_string(dew_point_buff, 240, 185, DGX_WHITE(dgx_rgb_to_16), 2);
     draw_bitmap(dew_point_bitmap, 16, 225, 172, 1);
 
-    draw_string(cc_desc, 90, 210, DGX_WHITE(dgx_rgb_to_16), 3);
+    // Write the current description.
+    draw_string(cc_desc, 30, 210, DGX_WHITE(dgx_rgb_to_16), 3);
 
     // Determine what condition to draw based on the description.
-    if (string_contains(CC_CLEAR, cc_desc)) {
+    if (string_contains(cc_desc, CC_CLEAR)) {
         draw_condition_clear();
-    } else if (string_contains(CC_PARTLY, cc_desc)) {
+    } else if (string_contains(cc_desc, CC_PARTLY)) {
         draw_condition_partly_cloudy();
-    } else if (string_contains(CC_CLOUDY, cc_desc)) {
+    } else if (string_contains(cc_desc, CC_CLOUDY)) {
         draw_condition_cloudy();
-    } else if (string_contains(CC_STORM, cc_desc)) {
+    } else if (string_contains(cc_desc, CC_THUNDER)) {
         draw_condition_storm();
-    } else if (string_contains(CC_RAIN, cc_desc) || string_contains(CC_SHOWERS, cc_desc)) {
+    } else if (string_contains(cc_desc, CC_RAIN) || string_contains(cc_desc, CC_SHOWERS)) {
         draw_condition_rain();
     } else {
         draw_condition_unknown();
@@ -870,7 +898,7 @@ void draw_menu_view() {
         } else {
             color = DGX_WHITE(dgx_rgb_to_16);
         }
-        draw_string(option, 0, 80 + (MENU_OPTIONS_OFFSET * (i + 1)), color, 2);
+        draw_string(option, MENU_OPTIONS_X, 60 + (MENU_OPTIONS_OFFSET * (i + 1)), color, 2);
 
 		memset(option, 0, option_size);
 		temp_curr_menu_node = temp_curr_menu_node->next_sibling;
@@ -933,6 +961,7 @@ void check_error_bits(void *arg) {
 }
 
 void menu_btn_event(void *arg, void *usr_data) {
+    ESP_LOGI(TAG_INFO, "Menu button pressed.");
     if (curr_state == STATE_MENU) {
         update_menu(true, false, false);
     } else if (curr_state == STATE_CC) {
@@ -942,12 +971,14 @@ void menu_btn_event(void *arg, void *usr_data) {
 }
 
 void menu_up_btn_event(void *arg, void *usr_data) {
+    ESP_LOGI(TAG_INFO, "Menu up button pressed.");
     if (curr_state == STATE_MENU) {
         update_menu(false, true, false);
     }
 }
 
 void menu_down_btn_event(void *arg, void *usr_data) {
+    ESP_LOGI(TAG_INFO, "Menu down button pressed.");
     if (curr_state == STATE_MENU) {
         update_menu(false, false, true);
     }
@@ -1043,7 +1074,7 @@ void init_pins() {
     menu_btn_config.long_press_time = BTN_LONG_PRESS_TIME_MS;
     menu_btn_config.short_press_time = BTN_SHORT_PRESS_TIME_MS;
     menu_btn_gpio_config.gpio_num = PIN_MENU;
-    menu_btn_gpio_config.active_level = BUTTON_ACTIVE;
+    menu_btn_gpio_config.active_level = BUTTON_INACTIVE;
     menu_btn_gpio_config.disable_pull = true;
     button_handle_t menu_btn;
     esp_err_t ret_menu = iot_button_new_gpio_device(&menu_btn_config, &menu_btn_gpio_config, &menu_btn);
@@ -1051,7 +1082,7 @@ void init_pins() {
     menu_up_btn_config.long_press_time = BTN_LONG_PRESS_TIME_MS;
     menu_up_btn_config.short_press_time = BTN_SHORT_PRESS_TIME_MS;
     menu_up_btn_gpio_config.gpio_num = PIN_MENU_UP;
-    menu_up_btn_gpio_config.active_level = BUTTON_ACTIVE;
+    menu_up_btn_gpio_config.active_level = BUTTON_INACTIVE;
     menu_up_btn_gpio_config.disable_pull = true;
 
     button_handle_t menu_up_btn;
@@ -1060,7 +1091,7 @@ void init_pins() {
     menu_down_btn_config.long_press_time = BTN_LONG_PRESS_TIME_MS;
     menu_down_btn_config.short_press_time = BTN_SHORT_PRESS_TIME_MS;
     menu_down_btn_gpio_config.gpio_num = PIN_MENU_DOWN;
-    menu_down_btn_gpio_config.active_level = BUTTON_ACTIVE;
+    menu_down_btn_gpio_config.active_level = BUTTON_INACTIVE;
     menu_down_btn_gpio_config.disable_pull = true;
     button_handle_t menu_down_btn;
     esp_err_t ret_menu_down = iot_button_new_gpio_device(&menu_down_btn_config, &menu_down_btn_gpio_config, 
@@ -1137,6 +1168,30 @@ void init_menu() {
     struct MenuNode *clear_error_code_node = create_menu_node(MENU_OPTION_CLEAR_ERROR_CODE);
     clear_error_code_node->prev_sibling = system_info_node;
     system_info_node->next_sibling = clear_error_code_node;
+
+    // CC testing nodes.
+    struct MenuNode *tests_cc_back_node = create_menu_node(MENU_OPTION_BACK);
+    tests_cc_node->first_child = tests_cc_back_node;
+
+    struct MenuNode *cc_clear_node = create_menu_node(MENU_OPTION_CLEAR);
+    tests_cc_back_node->next_sibling = cc_clear_node;
+    cc_clear_node->prev_sibling = tests_cc_back_node;
+
+    struct MenuNode *cc_cloudy_node = create_menu_node(MENU_OPTION_CLOUDY);
+    cc_clear_node->next_sibling = cc_cloudy_node;
+    cc_cloudy_node->prev_sibling = cc_clear_node;
+
+    struct MenuNode *cc_partly_cloudy_node = create_menu_node(MENU_OPTION_PARTLY_CLOUDY);
+    cc_cloudy_node->next_sibling = cc_partly_cloudy_node;
+    cc_partly_cloudy_node->prev_sibling = cc_cloudy_node;
+
+    struct MenuNode *cc_showers_node = create_menu_node(MENU_OPTION_SCATTERED_SHOWERS);
+    cc_partly_cloudy_node->next_sibling = cc_showers_node;
+    cc_showers_node->prev_sibling = cc_partly_cloudy_node;
+
+    struct MenuNode *cc_thunderstorm_node = create_menu_node(MENU_OPTION_THUNDERSTORM);
+    cc_showers_node->next_sibling = cc_thunderstorm_node;
+    cc_thunderstorm_node->prev_sibling = cc_showers_node;
 
 	curr_parent_node = root_menu_node;
 	curr_section_lead_node = back_node;

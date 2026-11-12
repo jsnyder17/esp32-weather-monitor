@@ -53,6 +53,11 @@
 #define MENU_OPTION_BACK    "Back"
 #define MENU_OPTION_CLEAR_ERROR_CODE  "Clear Error Code"
 #define MENU_OPTION_SYSTEM_INFO  "System Info"
+#define MENU_OPTION_CLEAR "Clear"
+#define MENU_OPTION_CLOUDY  "Cloudy"
+#define MENU_OPTION_PARTLY_CLOUDY "Partly Cloudy"
+#define MENU_OPTION_SCATTERED_SHOWERS "Scattered Showers"
+#define MENU_OPTION_THUNDERSTORM  "Thunderstorm"
 
 // State constants
 #define STATE_CC  UINT8_C(0)
@@ -65,7 +70,7 @@
 #define CC_PARTLY   "Partly"
 #define CC_RAIN "Rain"
 #define CC_SHOWERS  "Showers"
-#define CC_STORM  "Storm"
+#define CC_THUNDER  "Thunder"
 #define WIND_DIR_N  "N "
 #define WIND_DIR_NW "NW"
 #define WIND_DIR_W  "W "
@@ -80,7 +85,7 @@
 
 // Pin constants
 const gpio_num_t PIN_MENU = (gpio_num_t) GPIO_NUM_33;
-const gpio_num_t PIN_MENU_UP = (gpio_num_t) GPIO_NUM_32;
+const gpio_num_t PIN_MENU_UP = (gpio_num_t) GPIO_NUM_34;
 const gpio_num_t PIN_MENU_DOWN = (gpio_num_t) GPIO_NUM_35;
 const gpio_num_t PIN_BUZZER_1 = (gpio_num_t) GPIO_NUM_25;
 const gpio_num_t PIN_BUZZER_2 = (gpio_num_t) GPIO_NUM_21;
@@ -98,9 +103,10 @@ const gpio_num_t PIN_INC_DATA_LED = (gpio_num_t) GPIO_NUM_26;
 
 // Menu constants
 #define MAX_MENU_NODE_DATA_CHARS    UINT8_C(50)
-const uint8_t MENU_MAX_OPTIONS_DISPLAYED = 4;
-const uint8_t MENU_OPTIONS_OFFSET = 20;
-const uint8_t MENU_MAX_OPTION_CHARS = 50;
+#define MENU_OPTIONS_X  INT16_C(5)
+#define MENU_MAX_OPTIONS_DISPLAYED  UINT8_C(6)
+#define MENU_OPTIONS_OFFSET UINT8_C(20)
+#define MENU_MAX_OPTION_CHARS UINT8_C(50)
 
 // Buzzer constants
 const uint16_t EAS_TONE_FREQ_1 = 850;
