@@ -117,6 +117,9 @@ struct MenuNode* find_grandparent_node(struct MenuNode *node, struct MenuNode *g
 
 void exit_menu() {
     curr_parent_node = root_menu_node;
+    curr_section_lead_node = root_menu_node->first_child;
+    curr_menu_node = curr_section_lead_node;
+    curr_menu_pos = 0;
     curr_state = STATE_CC;
     refresh_display = true;
 }
@@ -137,7 +140,6 @@ void perform_menu_action() {
         curr_state = STATE_SI;
         refresh_display = true;
 	} else if (compare_strings(MENU_OPTION_CLEAR_ERROR_CODE, curr_menu_node->data, -1)) {
-        ESP_LOGI(TAG_INFO, "Cleared error bits.");
         error_bits = 0b00000000;
     } else if (compare_strings(MENU_OPTION_CLEAR, curr_menu_node->data, -1)) {
         memset(cc_desc, 0, MAX_DESC_CHARS);
@@ -190,7 +192,7 @@ esp_err_t http_event_handler(esp_http_client_event_t *evt) {
 //*********************************************************************************************************************
 
 void draw_header_rect() {
-    fill_rect_v_gradient(0, 10, 210, 40, DGX_ORANGE(dgx_rgb_to_16), DGX_NAVY(dgx_rgb_to_16));
+    fill_rect_v_gradient(0, 10, 210, 40, DGX_COPPER(dgx_rgb_to_16), DGX_NAVY(dgx_rgb_to_16));
 }
 
 void draw_string(const char *str, int16_t x, int16_t y, uint32_t color, int scale) {
@@ -259,7 +261,7 @@ void draw_condition_unknown() {
 }
 
 void clear_screen() {
-    fill_rect_v_gradient(0, 0, tft->width, tft->height, DGX_NAVY(dgx_rgb_to_16), DGX_ORANGE(dgx_rgb_to_16));
+    fill_rect_v_gradient(0, 0, tft->width, tft->height, DGX_NAVY(dgx_rgb_to_16), DGX_COPPER(dgx_rgb_to_16));
 }
 
 //*********************************************************************************************************************
@@ -817,7 +819,7 @@ void draw_cc_view() {
 
     // Draw container rectangle
     dgx_fill_rectangle(tft, 5, 60, 310, 170, DGX_DARKCYAN(dgx_rgb_to_16));
-    fill_rect_v_gradient(10, 65, 300, 160, DGX_BLUE(dgx_rgb_to_16), DGX_NAVY(dgx_rgb_to_16));
+    dgx_fill_rectangle(tft, 7, 62, 306, 166, CC_CONTAINER_COLOR);
 
     // Write the date and time.
     draw_string(date, 220, 25, DGX_WHITE(dgx_rgb_to_16), 2);

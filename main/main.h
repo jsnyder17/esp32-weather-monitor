@@ -5,6 +5,7 @@
 #include <shiftregister_gpio.h>
 #include <semaphore.h>
 #include "dgx_image.h"
+#include "dgx_bits.h"
 #include "iot_button.h"
 #include "button_gpio.h"
 
@@ -116,6 +117,7 @@ const uint8_t BUZZER_POWER_ON_DURATION_MS = 250;
 const uint16_t EAS_TONE_DURATION_MS = 3000;
 
 // UI constants
+#define CC_CONTAINER_COLOR  dgx_rgb_to_16(41, 54, 103)
 const uint8_t TEXT_SIZE = 2;
 const uint8_t SHADOW_OFFSET = 2;
 
