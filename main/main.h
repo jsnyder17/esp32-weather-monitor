@@ -13,8 +13,8 @@
 
 // NWS API string constants 
 #define API_HOST    "https://api.weather.gov/"
-#define LATITUDE    "34.9702"
-#define LONGITUDE   "-81.1832"
+#define LATITUDE    "39.9623"
+#define LONGITUDE   "-76.7276"
 #define NWS_API_ITEM_LIMIT  "1"
 #define LAT_LONG_DELIM  ","
 #define PARAM_DELIM "&"

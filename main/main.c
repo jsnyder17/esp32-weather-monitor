@@ -978,6 +978,7 @@ void play_eas_tone_buzzer_1(void *arg) {
         }
         ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0, 0);
         ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0);
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
@@ -991,6 +992,7 @@ void play_eas_tone_buzzer_2(void *arg) {
         }
         ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_2, 0);
         ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_2);
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
