@@ -131,6 +131,9 @@ const bool DEG_F = true;
 button_config_t menu_btn_config, menu_up_btn_config, menu_down_btn_config;
 button_gpio_config_t menu_btn_gpio_config, menu_down_btn_gpio_config, menu_up_btn_gpio_config;
 
+// Buzzer constants
+#define BUZZER_DUTY 700
+
 // Seven segment error code constants
 const uint8_t ERROR_NWS_API_GET = 0b00000001;
 const uint8_t ERROR_DISPLAY_CC = 0b00000010;
@@ -884,7 +887,7 @@ shiftregister_config_t reg_config = {
 SemaphoreHandle_t mutex;
 
 // Buzzers
-bool play_eas_tone = true;
+bool play_eas_tone = false;
 
 // Function prototypes
 //*********************************************************************************************************************
@@ -955,10 +958,14 @@ void menu_btn_event(void *arg, void *usr_data);
 void menu_up_btn_event(void *arg, void *usr_data);
 void menu_down_btn_event(void *arg, void *usr_data);
 
+void play_eas_tone_buzzer_1(void *arg);
+void play_eas_tone_buzzer_2(void *arg);
+
 //*********************************************************************************************************************
 
 void init_pins();
 void init_display();
 void init_menu();
+void init_buzzers();
 
 #endif

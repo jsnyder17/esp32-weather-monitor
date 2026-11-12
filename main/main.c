@@ -765,8 +765,8 @@ void update_menu(bool menu, bool menu_up, bool menu_down) {
         refresh_display = true;
 	} else if (menu) {
 		if (curr_menu_node->first_child != NULL) {
-			curr_parent_node = curr_menu_node;	// The memory address (the value of the pointers). All pointers are values that contain memory addresses. So say curr_menu_node points to 0x04, now curr_parent_node will also point to 0x04.
-			curr_menu_node = curr_menu_node->first_child;	// The memory address of curr_menu_node->first_child is then assigned to curr_menu_node (copied)
+			curr_parent_node = curr_menu_node;
+			curr_menu_node = curr_menu_node->first_child;
 			curr_section_lead_node = curr_menu_node;
 			curr_menu_pos = 0;
             refresh_display = true;		
@@ -968,6 +968,32 @@ void check_and_update_display(void *arg) {
     }
 }
 
+void play_eas_tone_buzzer_1(void *arg) {
+    while (true) {
+        if (play_eas_tone) {
+            ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0, BUZZER_DUTY);
+            ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0);
+            vTaskDelay(pdMS_TO_TICKS(1000));
+            play_eas_tone = false;
+        }
+        ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0, 0);
+        ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0);
+    }
+}
+
+void play_eas_tone_buzzer_2(void *arg) {
+    while (true) {
+        if (play_eas_tone) {
+            ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_2, BUZZER_DUTY);
+            ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_2);
+            vTaskDelay(pdMS_TO_TICKS(1000));
+            play_eas_tone = false;
+        }
+        ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_2, 0);
+        ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_2);
+    }
+}
+
 //*********************************************************************************************************************
 
 void init_pins() {
@@ -1116,6 +1142,42 @@ void init_menu() {
 	curr_menu_pos = 0;
 }
 
+void init_buzzers() {
+    // Buzzer 1
+    ledc_timer_config_t buzzer_1_config = {
+        .speed_mode = LEDC_HIGH_SPEED_MODE,
+        .duty_resolution = LEDC_TIMER_10_BIT,
+        .timer_num = LEDC_TIMER_0,
+        .freq_hz = EAS_TONE_FREQ_1,
+    };
+    ledc_channel_config_t buzzer_1_channel = {
+        .gpio_num = PIN_BUZZER_1,
+        .speed_mode = LEDC_HIGH_SPEED_MODE,
+        .channel = LEDC_CHANNEL_0,
+        .timer_sel = LEDC_TIMER_0,
+        .duty = 0
+    };
+    ledc_timer_config(&buzzer_1_config);
+    ledc_channel_config(&buzzer_1_channel);
+
+    // Buzzer 2
+    ledc_timer_config_t buzzer_2_config = {
+        .speed_mode = LEDC_HIGH_SPEED_MODE,
+        .duty_resolution = LEDC_TIMER_10_BIT,
+        .timer_num = LEDC_TIMER_1,
+        .freq_hz = EAS_TONE_FREQ_2,
+    };
+    ledc_channel_config_t buzzer_2_channel = {
+        .gpio_num = PIN_BUZZER_2,
+        .speed_mode = LEDC_HIGH_SPEED_MODE,
+        .channel = LEDC_CHANNEL_2,
+        .timer_sel = LEDC_TIMER_1,
+        .duty = 0
+    };
+    ledc_timer_config(&buzzer_2_config);
+    ledc_channel_config(&buzzer_2_channel);
+}
+
 //*********************************************************************************************************************
 
 void app_main(void) {
@@ -1127,6 +1189,9 @@ void app_main(void) {
 
     // Initialize the menu nodes
     init_menu();
+
+    // Initialize buzzers
+    init_buzzers();
 
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
@@ -1150,4 +1215,6 @@ void app_main(void) {
     xTaskCreate(http_get_time, "http_get_time", 4028, NULL, 5, NULL);
     xTaskCreate(http_get_curr_conditions, "http_get_curr_conditions", 8192, NULL, 6, NULL);
     xTaskCreate(http_get_forecast, "http_get_forecast", 8192, NULL, 7, NULL);
+    xTaskCreate(play_eas_tone_buzzer_1, "play_eas_tone_buzzer_1", 1024, NULL, 8, NULL);
+    xTaskCreate(play_eas_tone_buzzer_2, "play_eas_tone_buzzer_2", 1024, NULL, 9, NULL);
 }
